@@ -18,24 +18,34 @@ def merge(tokens,pair,target):
             i+=1
     return newtokens    
 
+def replace_control_character(s):
+    out=[]
+    for ch in s:
+        if category(ch)[0]!='C':
+            out.append(ch)
+        else:
+            out.append(f'\\u{ord(ch):04x}')
+    return ''.join(out)
+
+def render_token(t):
+    s=t.decode('utf-8',errors='replace')
+    s=replace_control_character(s)
+    return t
+
 
 class basic_tokenizer:
     def __init__(self):
         self.merges={}
-        self.vocab=self.build_vocab(self.merges)
-
-    def build_vocab(self):
-        vocab={index:bytes([index]) for index in range(256)}
-        for pair,index in self.merges.items():
-            p0,p1=pair
-            vocab[index]=vocab[p0]+vocab[p1]
+        self.vocab={}
     
-    def train(self,tokens,vocab_size):
+    def train(self,text,vocab_size):
         assert vocab_size>=256
         num_iters=vocab_size-256
+        tokens=list(text.encode('utf-8'))
         target=255
         ids=list(tokens)
         merges={}
+        vocab={index:bytes([index]) for index in range(256)}
         for i in range(num_iters):
             if len(ids)<2:
                 break
@@ -44,6 +54,25 @@ class basic_tokenizer:
             target=target+1
             ids=merge(ids,pair,target)
             merges[pair]=target
-
+            vocab[target]=vocab[pair[0]]+vocab[pair[1]]
         self.merges=merges
+        self.vocab=vocab
+        
+    def encode(self,text):
+        tokens=list(text.encode('utf-8'))
+        ids=list(tokens)
+        while len(ids)>=2:
+            stats=get_stats(ids)
+            pair=min(stats,key = lambda p:self.merges.get(p,float('inf')))
+            if pair not in self.merges.keys():
+                break
+            target=self.merges[pair]
+            ids=merge(ids,pair,target)
+    
+        return ids
+    
+    def decode(self,t):
+        index_byte=b''.join(self.vocab[index] for index in t)
+        text=index_byte.decode('utf-8',errors='replace')
+        return text
         
