@@ -1,6 +1,7 @@
 import regex as re
+from unicodedata import category
 
-gpt2pat = re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
+gpt2pat = r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
 def get_stats(ids,counts=None):
     counts={} if counts is None else counts
@@ -25,6 +26,16 @@ def make_tokens(compiled_pattern,text):    #return tokenized chunks of text_chun
       tokens=[list(chunk.encode('utf-8')) for chunk in text_chunk]
       return tokens
 
+def render(tokens):
+    t=tokens.decode('utf-8',errors='replace')
+    out=[]
+    for token in t:
+        if category(token)[0]!='C':
+            out.append(token)
+        else:
+            out.append(f'\\u{ord(token):04x}')
+    return ''.join(out)
+
 
 class special_tokenizer:
     def __init__(self,pattern=None) -> None:
@@ -38,14 +49,15 @@ class special_tokenizer:
     def train(self,text) :
         tokens=make_tokens(self.compiled_pattern,text)
         merges = {} # (int, int) -> int
+        ids=list(tokens)
         vocab={k:bytes([k]) for k in range(256)}
         for i in range(10):
             stats = {}
-            for chunk_ids in tokens:
+            for chunk_ids in ids:
                 get_stats(chunk_ids, stats)
             pair = max(stats, key=stats.get)
             idx = 256 + i
-            ids = [merge(chunk_ids, pair, idx) for chunk_ids in tokens]
+            ids = [merge(chunk_ids, pair, idx) for chunk_ids in ids]
             merges[pair] = idx
             vocab[idx]=vocab[pair[0]]+vocab[pair[1]]
         self.merges=merges
@@ -113,10 +125,52 @@ class special_tokenizer:
                 ids.extend(self.encode_ordinary_text(chunk))
         return ids
 
-
-        
-
-
-
-    
-
+    def save(self,filename):
+        model_file=filename+'.model'
+        with open(model_file,'w',encoding='utf-8') as f:
+                f.write('special tokens\n')
+                f.write(f'{self.compiled_pattern}\n')
+                f.write(f'{len(self.special_tokens)}\n')
+                for token in self.special_tokens:
+                    f.write(f'{token} {self.special_tokens[token]}\n')
+                f.write('merged indices\n')
+                for index in self.merges:
+                    f.write(f'{index[0]} {index[1]}\n')
+                    
+        vocab_file=filename+'.vocab'
+        invert_merges={v:k for k,v in self.merges.items()}
+        with open(vocab_file,'w',encoding='utf-8') as f:
+            for index,token in self.vocab.items():
+                ch=render(token)
+                if index in invert_merges:
+                    p0,p1=invert_merges[index]
+                    ch0=render(self.vocab[p0])
+                    ch1=render(self.vocab[p1])
+                    f.write(f'{ch0}+{ch1}->{ch}\n')
+                else:
+                    f.write(f'{ch}\n')
+                    
+    def load(self,file_name):
+        model_file=file_name+'.model'
+        special,merges={},{}
+        idx=256
+        assert model_file=='special_tokenizer.model'
+        with open(model_file,'r') as f:
+            type=f.readline().strip()
+            assert type=='special tokens'
+            pattern=f.readline().strip()
+            num_iters=f.readline().strip()
+            for i in range(int(num_iters)):
+                token,id=f.readline().strip().split(' ')
+                special[token]=int(id)
+            type=f.readline().strip()
+            assert type=='merged indices'
+            for indices in f:
+                idx0,idx1=map(int,indices.split())
+                merges[idx0,idx1]=idx
+                idx+=1
+        self.merges=merges
+        self.pattern=pattern
+        self.special_tokens=special
+                
+            
