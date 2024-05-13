@@ -1,13 +1,8 @@
 import regex as re
 from unicodedata import category
-
+from .basic_tokenization import get_stats
 gpt2pat = r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
-def get_stats(ids,counts=None):
-    counts={} if counts is None else counts
-    for pair in zip(ids,ids[1:]):
-        counts[pair]=counts.get(pair,0)+1
-    return counts
 
 def merge(tokens,pair,target):
     newtokens=[]
