@@ -87,6 +87,35 @@ class special_tokenizer:
             ids.extend(self.encode_chunk(chunk_token))
         return ids
         
+    def encode(self,text,allowed_special=None):
+        special=None
+        if allowed_special=='all':
+            special=self.special_tokens
+        else:
+            raise ValueError(f'allowed special type  {allowed_special} : Not understood')
+        
+        if not special:
+            return self.encode_ordinary_text(text)
+        
+        special_pattern='('+'|'.join(re.escape(k) for k in special)+')'
+
+        ## suppose i am using <|end|> as my special token then it will o/p <\\|end\\|>
+        # The result is due to re.escape that escapes(puts backslash) characters like '|','.','$', and so on
+        # furtermore it is essential because these patterns are using for splitting special tokens from text
+        #the use of parenthesis is that re.split that we will use in next loc return the pattern too when pattern
+        #is defined inside parenthesis
+        ids=[]
+        chunks=re.split(special_pattern,text)
+        for chunk in chunks:
+            if chunk in special:
+                ids.append(special[chunk])
+            else:
+                ids.extend(self.encode_ordinary_text(chunk))
+        return ids
+
+
+        
+
 
 
     
