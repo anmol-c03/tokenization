@@ -46,12 +46,14 @@ class special_tokenizer:
         self.vocab={}
         self.merges={}
 
-    def train(self,text) :
+    def train(self,text,vocab_size) :
+        assert vocab_size>=256
+        num_iters=vocab_size-256
         tokens=make_tokens(self.compiled_pattern,text)
-        merges = {} # (int, int) -> int
         ids=list(tokens)
+        merges = {} # (int, int) -> int
         vocab={k:bytes([k]) for k in range(256)}
-        for i in range(10):
+        for i in range(num_iters):
             stats = {}
             for chunk_ids in ids:
                 get_stats(chunk_ids, stats)
@@ -103,6 +105,8 @@ class special_tokenizer:
         special=None
         if allowed_special=='all':
             special=self.special_tokens
+        elif allowed_special==None:
+            special={}
         else:
             raise ValueError(f'allowed special type  {allowed_special} : Not understood')
         

@@ -76,20 +76,25 @@ class basic_tokenizer:
         text=index_byte.decode('utf-8',errors='replace')
         return text
         
+    def register_special_tokens(self,s):
+        pass
+    
     def save(self,file_name):
         model_file=file_name+'.model'
         with open(model_file,'w') as f:
             f.write('Binary Pair Encodeing')
             for idx1,idx2 in self.merges.keys():
-                f.write(idx1,idx2)
+                f.write(f'{idx1,idx2}\n')
 
         vocab_file=file_name+'.vocab'
         invert_merges={tokens:pair for pair,tokens in self.merges.items()}
         with open(vocab_file,'w') as f:
             for index,token in self.vocab.items():
                 chrs=render_token(token)
-                for index in invert_merges:
+                if index in invert_merges:
                     idx0,idx1=invert_merges[index]
                     chr0=render_token(self.vocab[idx0])
                     chr1=render_token(self.vocab[idx1])
-                    f.write(f'{chr0} {chr1} -> {chrs}')
+                    f.write(f'{chr0} {chr1} -> {chrs}\n')
+                else:
+                    f.write(f'{chrs}\n')
