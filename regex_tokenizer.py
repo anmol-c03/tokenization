@@ -1,20 +1,17 @@
 import regex as re
 from unicodedata import category
-from .basic_tokenization import get_stats
+from basic_tokenization import merge
+
 gpt2pat = r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
 
+def get_stats(ids,counts=None):
+    counts={} if counts is None else counts
+    for pair in zip(ids,ids[1:]):
+        counts[pair]=counts.get(pair,0)+1
+    return counts
 
-def merge(tokens,pair,target):
-    newtokens=[]
-    i=0
-    while i < len(tokens):
-        if i<len(tokens)-1 and tokens[i]==pair[0] and tokens[i+1]==pair[1]:
-            newtokens.append(target)
-            i+=2
-        else:
-            newtokens.append(tokens[i])
-            i+=1
-    return newtokens 
+
+
 
 def make_tokens(compiled_pattern,text):    #return tokenized chunks of text_chunks defined by re.findall()
       text_chunk=re.findall(compiled_pattern, text)
@@ -40,6 +37,15 @@ class special_tokenizer:
         self.inverse_special_tokens={}
         self.vocab={}
         self.merges={}
+
+    def _build_vocab(self):
+        # vocab is simply and deterministically derived from merges
+        vocab = {idx: bytes([idx]) for idx in range(256)}
+        for (p0, p1), idx in self.merges.items():
+            vocab[idx] = vocab[p0] + vocab[p1]
+        for special, idx in self.special_tokens.items():
+            vocab[idx] = special.encode("utf-8")
+        return vocab
 
     def train(self,text,vocab_size) :
         assert vocab_size>=256
@@ -69,8 +75,8 @@ class special_tokenizer:
         for token in tokens:
             if token in self.vocab:
                 bytes.append(self.vocab[token])
-            elif token in self.special_tokens:
-                bytes.append(self.special_tokens[token].encode('utf-8'))
+            elif token in self.inverse_special_tokens:
+                bytes.append(self.inverse_special_tokens[token].encode('utf-8'))
             else:
                 raise ValueError('invalid token')
         text_bytes=b''.join(bytes)
@@ -153,7 +159,7 @@ class special_tokenizer:
         model_file=file_name+'.model'
         special,merges={},{}
         idx=256
-        assert model_file=='special_tokenizer.model'
+        assert model_file=='special.model'
         with open(model_file,'r') as f:
             type=f.readline().strip()
             assert type=='special tokens'
@@ -170,6 +176,7 @@ class special_tokenizer:
                 idx+=1
         self.merges=merges
         self.pattern=pattern
-        self.special_tokens=special
+        self.register_special_tokens(special)
+        self.vocab=self._build_vocab()
                 
             
