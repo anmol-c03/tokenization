@@ -22,4 +22,5 @@ To overcome the limitations of basic_tokenization, regex pattern was utilized be
 ## References
 
 BPE https://arxiv.org/pdf/1508.07909v5
+
 utf-8 https://en.wikipedia.org/wiki/UTF-8
