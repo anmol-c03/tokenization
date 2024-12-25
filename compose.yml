@@ -2,4 +2,5 @@ version: "3"
 
 services:
     tokenizer:
-      image: tokenizer:1.0
+      image: tokenizer:1.0 #replace it with tag you give while building image using docker build
+      
