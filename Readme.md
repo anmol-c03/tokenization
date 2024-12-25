@@ -19,6 +19,26 @@ This tokenizer solely utilises the BPE  for tokenization. This tokenizer treats 
 2. regex_tokenizer:
 To overcome the limitations of basic_tokenization, regex pattern was utilized before using BPE. One can explore more about it through regex_tokenizer.py. For better performance, one can change regex pattern as per their dialect if using for local languages.
 
+# Installation
+To use this project, follow these steps:
+
+1. clone the project 
+```bash 
+git clone https://github.com/anmol-c03/tokenization.git&& \
+cd tokenization
+```
+2. Build the docker image
+
+```bash
+docker build -t tokenizer:1.0 .
+
+```
+3. Run the container
+
+```bash
+docker-compose -f docker-compose.yml up
+```
+
 ## References
 
 BPE https://arxiv.org/pdf/1508.07909v5
