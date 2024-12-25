@@ -1,6 +1,6 @@
 import os
-from basic_tokenization import basic_tokenizer
-from regex_tokenizer import special_tokenizer
+from basic_tokenizer.basic_tokenization import basic_tokenizer
+from regex_tokenizer.regex_tokenization import special_tokenizer
 
 special_tokens = {
     '<|endoftext|>': 100257,
@@ -10,7 +10,7 @@ special_tokens = {
     '<|endofprompt|>': 100276
 }
 
-text= open('taylorswift.txt','r',encoding='utf-8').read()
+text= open('path_to_text_file','r',encoding='utf-8').read()
 
 for tokenizer_name,name in zip([basic_tokenizer,special_tokenizer],['basic','special']):
     tokenizer=tokenizer_name()
