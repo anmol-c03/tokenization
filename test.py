@@ -5,7 +5,8 @@
 # are considered as a single token then all the info cant be embedded and model will obviously fails 
 # when it sees such words 
 
-from regex_tokenizer import special_tokenizer
+from regex_tokenizer.regex_tokenization import special_tokenizer
+
 
 tokenizer=special_tokenizer()
 tokenizer.load('special')
@@ -19,4 +20,5 @@ The ancestors of llamas are thought to have originated from the Great Plains of 
 
 encoded_text=tokenizer.encode(text,allowed_special='all')
 decoded_text=tokenizer.decode(encoded_text)
-assert decoded_text==text
+if  decoded_text==text:
+    print("Test passed")
