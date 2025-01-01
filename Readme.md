@@ -7,7 +7,7 @@
 5. [References](#references)
 
 ## Project Overview
-This project implemets the tokenization using Binary Pair Encoding. Binary Pair Encoding (BPE) is a subword tokenization technique that addresses the limitations of character-level tokenization, which often loses semantics, fails to capture morphemes, and reduces context. BPE begins by calculating the frequency of consecutive character pairs in a dataset. The most frequent pair is merged into a new token, and this process repeats until the vocabulary reaches a predefined size. This approach balances capturing semantics and syntax while maintaining a manageable vocabulary, making it effective for NLP tasks.
+This project implemets the tokenization using Byte Pair Encoding. Byte Pair Encoding (BPE) is a subword tokenization technique that addresses the limitations of character-level tokenization, which often loses semantics, fails to capture morphemes, and reduces context. BPE begins by calculating the frequency of consecutive character pairs in a dataset. The most frequent pair is merged into a new token, and this process repeats until the vocabulary reaches a predefined size. This approach balances capturing semantics and syntax while maintaining a manageable vocabulary, making it effective for NLP tasks.
 
 ## Usage 
 One can train their own tokenizer using train.py.
